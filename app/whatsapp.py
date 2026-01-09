@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Form
 from twilio.twiml.messaging_response import MessagingResponse
-from app.conversation import handle_message  # your corrected handler
+from app.conversation import handle_message  # Your conversation logic
 
 router = APIRouter()
 
@@ -10,16 +10,16 @@ def whatsapp_webhook(
     Body: str = Form(...)
 ):
     """
-    Handles incoming WhatsApp messages via Twilio.
+    Twilio webhook to handle incoming WhatsApp messages
     """
-    user_id = From.replace("whatsapp:", "")  # normalize user ID
+    # Clean user ID
+    user_id = From.replace("whatsapp:", "")
     message = Body
 
-    # Get bot reply
-    reply_text = handle_message(message, user_id)
+    # Get reply from your conversation handler
+    reply = handle_message(user_id, message)
 
-    # Prepare Twilio response
-    response = MessagingResponse()
-    response.message(reply_text)
-
-    return str(response)
+    # Build TwiML response (XML)
+    twiml = MessagingResponse()
+    twiml.message(reply)
+    return str(twiml)  # Twilio requires XML, not JSON
