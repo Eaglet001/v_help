@@ -37,14 +37,23 @@ BOOKING_LINK = "https://calendly.com/yourfriend"
 
 
 def format_services_menu() -> str:
-    """Return a nicely formatted services menu for display in WhatsApp."""
+    """Return a concise services menu (names only). Details are shown when a user selects a service."""
     lines = [WELCOME_MESSAGE, "Options:"]
     for k in sorted(SERVICES.keys(), key=lambda x: int(x)):
         name = SERVICES[k]
-        desc = SERVICE_DETAILS.get(name, "")
-        lines.append(f"{k}. {name} — {desc}")
+        lines.append(f"{k}. {name}")
 
     lines.append("\nReply with the number or service name. Type *AGENT* to speak to a human.")
     return "\n".join(lines)
+
+
+def format_service_detail(service_name: str) -> str:
+    """Return the detailed description for a selected service and next steps prompt."""
+    name = service_name or ""
+    desc = SERVICE_DETAILS.get(name, "Description is not available for this service.")
+    return (
+        f"You selected *{name}*:\n{desc}\n\n"
+        "Reply *YES* to proceed with this service, or *NO* to pick another service."
+    )
 
 

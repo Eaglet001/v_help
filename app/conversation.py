@@ -67,9 +67,15 @@ def handle_message(user_id: str, message: str) -> str:
 
     # Basic small-talk and control commands
     if msg_low in ("hi", "hello", "hey", "yo"):
+        # show menu and initialize session state for the user so subsequent replies are handled
+        user_state[user_id] = "service"
+        user_data[user_id] = {}
         return format_services_menu()
 
     if "menu" in msg_low or "services" in msg_low:
+        # explicitly reset to service selection
+        user_state[user_id] = "service"
+        user_data[user_id] = {}
         return format_services_menu()
 
     if "thank" in msg_low:
@@ -104,9 +110,17 @@ def handle_message(user_id: str, message: str) -> str:
 
         key, name = _match_service(msg_low)
         if key:
+            # user chose a service — show details now and ask to proceed
             user_data[user_id]["service"] = name
-            user_state[user_id] = "hours"
-            return f"Great choice — *{name}* ✅\nHow many hours per week do you need? (e.g. 5)"
+            user_state[user_id] = "service_detail"
+            # show the detailed description and prompt for confirmation
+            try:
+                from app.services import format_service_detail
+
+                return format_service_detail(name)
+            except Exception:
+                # fallback simple message
+                return f"You selected *{name}*. Reply YES to proceed or NO to pick another service."
 
         return "Please select a valid option from the menu (type the number or name). Type *MENU* to see options."
 
@@ -152,6 +166,19 @@ def handle_message(user_id: str, message: str) -> str:
 
     if state == "handoff":
         return "An agent will be in touch soon. In the meantime, type *MENU* to see options."
+
+    if state == "service_detail":
+        # waiting for user to confirm the selected service
+        if _is_affirmative(msg_low):
+            # proceed to hours collection
+            user_state[user_id] = "hours"
+            return "Great — how many hours per week would you like for this service? (e.g. 5)"
+        if _is_negative(msg_low):
+            # let user pick another service
+            user_state[user_id] = "service"
+            user_data[user_id].pop("service", None)
+            return format_services_menu()
+        return "Please reply YES to proceed with the selected service, or NO to choose a different one."
 
     # Fallback: optional LLM response for open-ended messages
     try:
