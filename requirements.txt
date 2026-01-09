@@ -1,4 +1,6 @@
-fastapi
+=fastapi
 uvicorn
-python-dotenv
+requests
 twilio
+python-multipart
+python-dotenv
