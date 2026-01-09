@@ -1,25 +1,32 @@
 from app.services import WELCOME_MESSAGE, SERVICES, FAQS, BOOKING_LINK
 from app.ai import llm_fallback  # optional LLM support
 
-# Memory store for state & data
+# Memory stores for user state and collected data
 user_state = {}
 user_data = {}
 
-def handle_message(message: str, user_id: str) -> str:
+def handle_message(user_id: str, message: str) -> str:
     """
-    Process incoming user messages and return the bot's reply.
+    Handles incoming WhatsApp messages from Twilio.
+    
+    Args:
+        user_id (str): The normalized sender ID (From number without "whatsapp:")
+        message (str): The incoming text message
+
+    Returns:
+        str: Bot reply
     """
     msg = message.lower().strip()
 
     # Human handoff
     if msg == "agent":
         user_state[user_id] = "handoff"
-        return "👩‍💼 Esther has been notified and will respond shortly."
+        return "👩‍💼 An agent has been notified and will respond shortly."
 
-    # Check FAQs (case-insensitive)
-    for key, answer in FAQS.items():
-        if key.lower() in msg:
-            return answer
+    # Check FAQs
+    for key in FAQS:
+        if key in msg:
+            return FAQS[key]
 
     # New user
     if user_id not in user_state:
@@ -27,9 +34,10 @@ def handle_message(message: str, user_id: str) -> str:
         user_data[user_id] = {}
         return WELCOME_MESSAGE
 
+    # Get current state
     state = user_state[user_id]
 
-    # Rule-based conversation flow
+    # Rule-based conversation
     if state == "service":
         if msg in SERVICES:
             user_data[user_id]["service"] = SERVICES[msg]
@@ -53,15 +61,8 @@ def handle_message(message: str, user_id: str) -> str:
         return (
             f"Perfect! 🎯\n\n"
             f"You can book a free discovery call here:\n👉 {BOOKING_LINK}\n\n"
-            "Type *AGENT* to speak directly with Sarah."
+            "Type *AGENT* to speak directly with a human agent."
         )
 
-    # Human handoff or unknown state
-    if state == "handoff":
-        return "👩‍💼 Please wait, an agent will respond shortly."
-
-    # Fallback: LLM support
-    if llm_fallback:
-        return llm_fallback(msg)
-
-    return "Sorry, I didn't understand that. Please try again."
+    # Fallback: optional LLM response
+    return llm_fallback(msg)
