@@ -5,7 +5,10 @@ from app.ai import llm_fallback  # optional LLM support
 user_state = {}
 user_data = {}
 
-def handle_message(user_id: str, message: str) -> str:
+def handle_message(message: str, user_id: str) -> str:
+    """
+    Process incoming user messages and return the bot's reply.
+    """
     msg = message.lower().strip()
 
     # Human handoff
@@ -13,10 +16,10 @@ def handle_message(user_id: str, message: str) -> str:
         user_state[user_id] = "handoff"
         return "👩‍💼 Esther has been notified and will respond shortly."
 
-    # Check FAQs
-    for key in FAQS:
-        if key in msg:
-            return FAQS[key]
+    # Check FAQs (case-insensitive)
+    for key, answer in FAQS.items():
+        if key.lower() in msg:
+            return answer
 
     # New user
     if user_id not in user_state:
@@ -26,7 +29,7 @@ def handle_message(user_id: str, message: str) -> str:
 
     state = user_state[user_id]
 
-    # Rule-based conversation
+    # Rule-based conversation flow
     if state == "service":
         if msg in SERVICES:
             user_data[user_id]["service"] = SERVICES[msg]
@@ -53,5 +56,12 @@ def handle_message(user_id: str, message: str) -> str:
             "Type *AGENT* to speak directly with Sarah."
         )
 
+    # Human handoff or unknown state
+    if state == "handoff":
+        return "👩‍💼 Please wait, an agent will respond shortly."
+
     # Fallback: LLM support
-    return llm_fallback(msg)
+    if llm_fallback:
+        return llm_fallback(msg)
+
+    return "Sorry, I didn't understand that. Please try again."

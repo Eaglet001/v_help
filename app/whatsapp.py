@@ -1,15 +1,25 @@
-# app/whatsapp.py
 from fastapi import APIRouter, Form
-from fastapi.responses import Response
 from twilio.twiml.messaging_response import MessagingResponse
+from app.conversation import handle_message  # your corrected handler
 
 router = APIRouter()
 
 @router.post("/whatsapp")
-def whatsapp_webhook(From: str = Form(...), Body: str = Form(...)):
-    # Create Twilio response
-    resp = MessagingResponse()
-    resp.message(f"You said: {Body}")
+def whatsapp_webhook(
+    From: str = Form(...),
+    Body: str = Form(...)
+):
+    """
+    Handles incoming WhatsApp messages via Twilio.
+    """
+    user_id = From.replace("whatsapp:", "")  # normalize user ID
+    message = Body
 
-    # Return XML with proper Content-Type
-    return Response(content=str(resp), media_type="text/xml")
+    # Get bot reply
+    reply_text = handle_message(message, user_id)
+
+    # Prepare Twilio response
+    response = MessagingResponse()
+    response.message(reply_text)
+
+    return str(response)
