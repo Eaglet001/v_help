@@ -79,12 +79,7 @@ def handle_message(user_id: str, message: str) -> str:
         return format_services_menu()
 
     if "thank" in msg_low:
-        return "You’re welcome! If you need anything else, type *MENU* to see options or *AGENT* to speak with a human."
-
-    # Human handoff (user requested an agent)
-    if msg_low == "agent" or "agent" in msg_low:
-        user_state[user_id] = "handoff"
-        return "👩‍💼 Connecting you to an agent now — you should receive a phone call shortly."
+        return "You’re welcome! If you need anything else, type *MENU* to see options."
 
     # Check FAQs
     for key in FAQS:
@@ -150,22 +145,21 @@ def handle_message(user_id: str, message: str) -> str:
         bud = user_data[user_id].get("budget")
         summary = (
             f"Summary:\nService: {s}\nHours/week: {h}\nBusiness: {b}\nBudget: {bud}\n\n"
-            "Reply *YES* to confirm and receive the booking link, or *AGENT* to speak with a human."
+            "Reply *YES* to confirm and receive the booking link."
         )
         return summary
 
     if state == "confirm":
         if _is_affirmative(msg_low):
             user_state[user_id] = "booked"
-            return f"Perfect! 🎯\nYou can book a discovery call here:\n👉 {BOOKING_LINK}\n\nType *AGENT* to request a phone call from our team."
+            return f"Perfect! 🎯\nYou can book a discovery call here:\n👉 {BOOKING_LINK}\n\nIf you need human help, reply and someone will follow up via text."
         if _is_negative(msg_low):
             user_state[user_id] = "service"
             user_data[user_id] = {}
             return "No problem. I cleared your session. Type *MENU* to start again."
-        return "Please reply YES to confirm or AGENT for a human."
+        return "Please reply YES to confirm."
 
-    if state == "handoff":
-        return "An agent will be in touch soon. In the meantime, type *MENU* to see options."
+    # removed handoff/agent call flow — this bot is personal-only
 
     if state == "service_detail":
         # waiting for user to confirm the selected service
@@ -185,4 +179,4 @@ def handle_message(user_id: str, message: str) -> str:
         return llm_fallback(msg)
     except Exception:
         logger.exception("LLM fallback failed")
-        return "Sorry, I didn’t understand that. Type *MENU* to see options or *AGENT* to speak with a human."
+        return "Sorry, I didn’t understand that. Type *MENU* to see options."

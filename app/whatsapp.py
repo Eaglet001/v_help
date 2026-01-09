@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Form, Response, BackgroundTasks
+from fastapi import APIRouter, Form, Response
 from twilio.twiml.messaging_response import MessagingResponse
 from app.conversation import handle_message  # Your conversation logic
-from app.twilio_client import place_agent_call
 import logging
 
 router = APIRouter()
@@ -12,7 +11,6 @@ logger = logging.getLogger("v_help.whatsapp")
 def whatsapp_webhook(
     From: str = Form(...),
     Body: str = Form(...),
-    background_tasks: BackgroundTasks = None,
 ):
     """
     Twilio webhook to handle incoming WhatsApp messages.
@@ -27,18 +25,6 @@ def whatsapp_webhook(
 
         # Get reply from your conversation handler
         reply = handle_message(user_id, message)
-
-        # If the user asked for an agent, schedule a background call to connect them.
-        # We detect common forms of the agent request here to ensure the call is placed.
-        if message and "agent" in message.lower():
-            # normalize phone number from "whatsapp:+123..." to "+123..."
-            user_phone = From.replace("whatsapp:", "")
-            logger.info("scheduling agent call to %s", user_phone)
-            if background_tasks is not None:
-                background_tasks.add_task(place_agent_call, user_phone)
-            else:
-                # fallback synchronous attempt
-                place_agent_call(user_phone)
 
         # Build TwiML response (XML)
         twiml = MessagingResponse()

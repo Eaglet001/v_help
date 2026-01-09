@@ -33,7 +33,10 @@ FAQS = {
     "trial": "We offer a short onboarding call and a trial period for new clients.",
 }
 
-BOOKING_LINK = "https://calendly.com/yourfriend"
+BOOKING_LINK = (
+    "https://calendar.google.com/calendar/r/eventedit?"
+    "text=Discovery+Call&details=Please+book+a+30-minute+discovery+call+with+Esther&sf=true"
+)
 
 
 def format_services_menu() -> str:
@@ -43,7 +46,7 @@ def format_services_menu() -> str:
         name = SERVICES[k]
         lines.append(f"{k}. {name}")
 
-    lines.append("\nReply with the number or service name. Type *AGENT* to speak to a human.")
+    lines.append("\nReply with the number or service name. Type *MENU* to return to this menu at any time.")
     return "\n".join(lines)
 
 
